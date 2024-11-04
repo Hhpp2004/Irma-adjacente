@@ -61,5 +61,8 @@ pagina *cria_raiz(pagina *folha,pagina *nova_pagina,chave *valor);
 void insere_arvore_b(arvore_b *raiz,int valor);
 void em_ordem(pagina *raiz);
 void mostrar_detalhes(lista *l);
-
+pagina *doacao(pagina *pai, int num, int ordem);
+void remocao(lista *l,int num);
+void delete(pagina *folha,int num,int ordem);
+void tudo(pagina *raiz,int num,int ordem);
 #endif

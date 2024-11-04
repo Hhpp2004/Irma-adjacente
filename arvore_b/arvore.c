@@ -155,6 +155,15 @@ chave *ultima_chave(pagina *folha)
     return valor;
 }
 
+chave *primeira_chave (pagina *folha)
+{
+    no *primeira_chave = retira_inicio(folha->lista);
+    chave *valor = primeira_chave->info;
+    free(primeira_chave);
+    folha->qtd_chaves--;
+    return valor;
+}
+
 /*TODO
 Aqui temos a função de divisão da pagina
 -> Será importante a biblioteca math.h para arredondar
@@ -283,6 +292,22 @@ void insere_arvore_b(arvore_b *a, int valor)
     }
 }
 
+void em_ordem(pagina *raiz)
+{
+    no *aux = NULL;
+    if (raiz != NULL)
+    {
+        aux = raiz->lista->inicio;
+        while (aux != NULL)
+        {
+            em_ordem(((chave *)aux->info)->filho);
+            printf("%i ", ((chave *)aux->info)->valor_chave);
+            aux = aux->prox;
+        }
+        em_ordem(raiz->dir);
+    }
+}
+
 /*
 TODO
 a)   uma função que retorne um ponteiro para a folha irmã adjacente da folha onde está
@@ -292,10 +317,9 @@ Se as duas folhas irmãs adjacentes tiverem o mesmo número de chaves
 (e que esse número permita a remoção), sempre use a folhar irmã da esquerda.
 */
 
-pagina *doacao(pagina *folha, int num, int ordem)
+pagina *doacao(pagina *pai, int num, int ordem)
 {
-    // percorrer a lista do pai da folha
-    pagina *pai = folha->pai;
+    // percorrer a lista do pai da folha    
     no *aux = pai->lista->inicio;
     // pecorrer cada lista dos filhos para não salvar a pagina onde tem o número para retirada
     no *aux_2 = NULL;
@@ -305,15 +329,17 @@ pagina *doacao(pagina *folha, int num, int ordem)
 
     while (aux != NULL)
     {
+        //percorro a lista do filho, causa o numero para remover estiver, eu vou para o proximo filho 
         aux_2 = getfilho(aux)->lista->inicio;
         while (aux_2 != NULL)
-        {
+        {            
             if (getvalor(aux_2) == num)
             {
-                flag = 1;
+                flag = 1; // o numero está nessa pagina
             }
             aux_2 = aux_2->prox;
         }
+        // um possivel doador
         if(flag != 1 && getfilho(aux)->qtd_chaves > ceil(ordem/2))
         {
             doador = getfilho(aux);
@@ -322,6 +348,10 @@ pagina *doacao(pagina *folha, int num, int ordem)
     }
 
     flag = 0;
+    /*TODO
+    caso as outras paginas não conseguem doar, temos que verificar a situação do 
+    filho que se encontra na direita
+    */
     if(doador == NULL)
     {
         while(aux_dir != NULL)
@@ -337,5 +367,67 @@ pagina *doacao(pagina *folha, int num, int ordem)
             doador = getfilho(aux_dir);
         }
     }
+    //caso ninguem consegue doar, o número é so apagado.
     return doador != NULL? doador:NULL;    
+}
+
+/*TODO
+b) uma função que dados a chave k a ser removida em uma folha, o ponteiro da folha, 
+o ponteiro da folha irmã adjacente com possibilidade de perder chaves (se ela existir)
+, remova a chave k e reorganize o que for necessário,
+redistribuindo as chaves restantes.
+*/
+
+void remocao(lista *l,int num)
+{
+        no *ant = NULL;
+        no *aux = l->inicio;
+        while(aux != NULL)
+        {
+            ant = aux;
+            aux = aux->prox;
+        }
+        if(aux->ant == NULL)
+        {
+            retira_inicio(l);
+        }
+        else if(aux->prox == NULL)
+        {
+            retira_fim(l);
+        }
+        else 
+        {
+            ant->prox = aux->prox;
+            aux->prox->ant = ant;
+            free(aux);
+            aux = NULL;
+        }
+}
+
+void delete(pagina *folha,int num,int ordem)
+{    
+    pagina *pai = folha->pai;
+    pagina *doador = doacao(pai,num,ordem);
+
+    if(doador == NULL)
+    {
+        remocao(folha->lista,num);
+    }
+    else
+    {
+        remocao(folha->lista,num);
+        insere_pagina(folha,primeira_chave(pai));
+        insere_pagina(pai,primeira_chave(doador));
+    }
+}
+
+/*TODO
+c)    Uma função com o objetivo de remover a chave k, que determine se k 
+está numa folha e que chame as funções anteriores para concluir a remoção.
+*/
+
+void tudo(pagina *raiz,int num,int ordem)
+{
+    pagina *folha = encontra_folha(raiz,num);
+    delete(folha,num,ordem);
 }

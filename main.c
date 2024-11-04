@@ -6,6 +6,7 @@ int main()
     arvore_b *raiz = NULL;
     scanf("%i", &ordem);
     raiz = cria_arvore(ordem);
+    scanf("%i",&deletar);
     do
     {
         scanf("%i",&num);
@@ -13,7 +14,11 @@ int main()
         {
             insere_arvore_b(raiz,num);
         }
-    } while (num != -1);
-    
+    } while (num != -1);    
+    printf("\n");
+    tudo(raiz->raiz,deletar,ordem);
+    printf("\n");
+    em_ordem(raiz->raiz);
+    printf("\n");
     return 0;
 }
