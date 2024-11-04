@@ -224,7 +224,7 @@ pagina *cria_raiz(pagina *folha, pagina *nova_pagina, chave *valor)
 {
     pagina *nova_raiz = cria_pagina();
     nova_raiz->folha = 0;
-    insere_pagina(nova_pagina,valor);
+    insere_pagina(nova_pagina, valor);
     valor->filho = folha;
     nova_raiz->dir = nova_pagina;
     nova_pagina->pai = nova_raiz;
@@ -264,7 +264,7 @@ void insere_arvore_b(arvore_b *a, int valor)
             {
                 valor_insere = 0;
             }
-            //TODO estourou a pagina, será necessario a divisão de dados
+            // TODO estourou a pagina, será necessario a divisão de dados
             else
             {
                 nova_pagina = divide_pagina(folha);
@@ -283,32 +283,59 @@ void insere_arvore_b(arvore_b *a, int valor)
     }
 }
 
-/*TODO função de mostrar todos os dados salvos*/
-void em_ordem(pagina *raiz)
-{
-    no *aux = NULL;
-    if (raiz != NULL)
-    {
-        aux = raiz->lista->inicio;
-        while (aux != NULL)
-        {
-            em_ordem(((chave *)aux->info)->filho);
-            printf("%i ", ((chave *)aux->info)->valor_chave);
-            aux = aux->prox;
-        }
-        em_ordem(raiz->dir);
-    }
-}
+/*
+TODO
+a)   uma função que retorne um ponteiro para a folha irmã adjacente da folha onde está
+a chave k que tenha o maior número de chaves. Se a folha com o maior número de chaves
+tiver somente o mínimo de chaves (ou seja, não pode perder chaves) a função deve retornar NULL.
+Se as duas folhas irmãs adjacentes tiverem o mesmo número de chaves
+(e que esse número permita a remoção), sempre use a folhar irmã da esquerda.
+*/
 
-void mostrar_detalhes (lista *l)
+pagina *doacao(pagina *folha, int num, int ordem)
 {
-    no *aux = l->inicio;
-    while(aux != NULL)
+    // percorrer a lista do pai da folha
+    pagina *pai = folha->pai;
+    no *aux = pai->lista->inicio;
+    // pecorrer cada lista dos filhos para não salvar a pagina onde tem o número para retirada
+    no *aux_2 = NULL;
+    int flag = 0;
+    pagina *doador = NULL;
+    no *aux_dir = pai->dir->lista->inicio;
+
+    while (aux != NULL)
     {
-        printf("%i [%i] %i",
-        aux->ant == NULL?0:getvalor(aux->ant),
-        getvalor(aux),
-        aux->prox == NULL?0:getvalor(aux->prox));
+        aux_2 = getfilho(aux)->lista->inicio;
+        while (aux_2 != NULL)
+        {
+            if (getvalor(aux_2) == num)
+            {
+                flag = 1;
+            }
+            aux_2 = aux_2->prox;
+        }
+        if(flag != 1 && getfilho(aux)->qtd_chaves > ceil(ordem/2))
+        {
+            doador = getfilho(aux);
+        }
         aux = aux->prox;
     }
+
+    flag = 0;
+    if(doador == NULL)
+    {
+        while(aux_dir != NULL)
+        {
+            if(getvalor(aux_dir) == num)
+            {
+                flag = 1;
+            }
+            aux_dir = aux_dir->prox;
+        }
+        if(flag != 1 && pai->dir->qtd_chaves > ceil(ordem/2) && aux_dir != NULL)
+        {
+            doador = getfilho(aux_dir);
+        }
+    }
+    return doador != NULL? doador:NULL;    
 }
