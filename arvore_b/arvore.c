@@ -155,7 +155,7 @@ chave *ultima_chave(pagina *folha)
     return valor;
 }
 
-chave *primeira_chave (pagina *folha)
+chave *primeira_chave(pagina *folha)
 {
     no *primeira_chave = retira_inicio(folha->lista);
     chave *valor = primeira_chave->info;
@@ -319,20 +319,21 @@ Se as duas folhas irmãs adjacentes tiverem o mesmo número de chaves
 
 pagina *doacao(pagina *pai, int num, int ordem)
 {
-    // percorrer a lista do pai da folha    
+    // percorrer a lista do pai da folha
     no *aux = pai->lista->inicio;
     // pecorrer cada lista dos filhos para não salvar a pagina onde tem o número para retirada
     no *aux_2 = NULL;
-    int flag = 0;
+    int flag = 0, bool = 0;
     pagina *doador = NULL;
+    pagina *doador_aux = NULL;
     no *aux_dir = pai->dir->lista->inicio;
 
     while (aux != NULL)
     {
-        //percorro a lista do filho, causa o numero para remover estiver, eu vou para o proximo filho 
+        // percorro a lista do filho, causa o numero para remover estiver, eu vou para o proximo filho
         aux_2 = getfilho(aux)->lista->inicio;
         while (aux_2 != NULL)
-        {            
+        {
             if (getvalor(aux_2) == num)
             {
                 flag = 1; // o numero está nessa pagina
@@ -340,94 +341,141 @@ pagina *doacao(pagina *pai, int num, int ordem)
             aux_2 = aux_2->prox;
         }
         // um possivel doador
-        if(flag != 1 && getfilho(aux)->qtd_chaves > ceil(ordem/2))
+        if (bool == 1)
+        {
+            doador_aux = getfilho(aux);
+            aux = NULL;
+        }
+        if (flag != 1)
         {
             doador = getfilho(aux);
+        }
+        else
+        {
+            bool = 1;
         }
         aux = aux->prox;
     }
 
     flag = 0;
     /*TODO
-    caso as outras paginas não conseguem doar, temos que verificar a situação do 
+    caso as outras paginas não conseguem doar, temos que verificar a situação do
     filho que se encontra na direita
     */
-    if(doador == NULL)
+    if (doador_aux == NULL)
     {
-        while(aux_dir != NULL)
+        while (aux_dir != NULL)
         {
-            if(getvalor(aux_dir) == num)
+            if (getvalor(aux_dir) == num)
             {
                 flag = 1;
             }
             aux_dir = aux_dir->prox;
         }
-        if(flag != 1 && pai->dir->qtd_chaves > ceil(ordem/2) && aux_dir != NULL)
+        if (flag != 1)
         {
-            doador = getfilho(aux_dir);
+            doador_aux = getfilho(aux_dir);
         }
     }
-    //caso ninguem consegue doar, o número é so apagado.
-    return doador != NULL? doador:NULL;    
+    if (doador == NULL)
+    {
+        if (doador_aux->qtd_chaves > ceil(ordem / 2))
+        {
+            doador = doador_aux;
+        }
+        else
+        {
+            doador = NULL;
+        }
+    }
+    else if (doador_aux == NULL)
+    {
+        if (doador->qtd_chaves <= ceil(ordem / 2))
+        {
+            doador = NULL;
+        }
+    }
+    else
+    {
+        if (doador->qtd_chaves >= doador_aux->qtd_chaves)
+        {
+            if (doador->qtd_chaves <= ceil(ordem / 2))
+            {
+                doador = NULL;
+            }
+        }
+        else
+        {
+            if(doador_aux->qtd_chaves <= ceil(ordem/2))
+            {
+                doador = NULL;
+            }
+            else
+            {
+                doador = doador_aux;
+            }
+        }
+    }    
+    return doador;
 }
 
 /*TODO
-b) uma função que dados a chave k a ser removida em uma folha, o ponteiro da folha, 
+b) uma função que dados a chave k a ser removida em uma folha, o ponteiro da folha,
 o ponteiro da folha irmã adjacente com possibilidade de perder chaves (se ela existir)
 , remova a chave k e reorganize o que for necessário,
 redistribuindo as chaves restantes.
 */
 
-void remocao(lista *l,int num)
+void remocao(lista *l, int num)
 {
-        no *ant = NULL;
-        no *aux = l->inicio;
-        while(aux != NULL)
-        {
-            ant = aux;
-            aux = aux->prox;
-        }
-        if(aux->ant == NULL)
-        {
-            retira_inicio(l);
-        }
-        else if(aux->prox == NULL)
-        {
-            retira_fim(l);
-        }
-        else 
-        {
-            ant->prox = aux->prox;
-            aux->prox->ant = ant;
-            free(aux);
-            aux = NULL;
-        }
-}
-
-void delete(pagina *folha,int num,int ordem)
-{    
-    pagina *pai = folha->pai;
-    pagina *doador = doacao(pai,num,ordem);
-
-    if(doador == NULL)
+    no *ant = NULL;
+    no *aux = l->inicio;
+    while (aux != NULL && getvalor(aux) != num)
     {
-        remocao(folha->lista,num);
+        ant = aux;
+        aux = aux->prox;
+    }
+    if (aux->ant == NULL)
+    {
+        retira_inicio(l);
+    }
+    else if (aux->prox == NULL)
+    {
+        retira_fim(l);
     }
     else
     {
-        remocao(folha->lista,num);
-        insere_pagina(folha,primeira_chave(pai));
-        insere_pagina(pai,primeira_chave(doador));
+        ant->prox = aux->prox;
+        aux->prox->ant = ant;
+        free(aux);
+        aux = NULL;
+    }
+}
+
+void delete(pagina *folha, int num, int ordem)
+{
+    pagina *pai = folha->pai;
+    pagina *doador = doacao(pai, num, ordem);
+
+    if (doador == NULL)
+    {
+        remocao(folha->lista, num);
+    }
+    else
+    {
+        remocao(folha->lista, num);
+        insere_pagina(folha, primeira_chave(pai));
+        insere_pagina(pai, primeira_chave(doador));
     }
 }
 
 /*TODO
-c)    Uma função com o objetivo de remover a chave k, que determine se k 
+c)    Uma função com o objetivo de remover a chave k, que determine se k
 está numa folha e que chame as funções anteriores para concluir a remoção.
 */
 
-void tudo(pagina *raiz,int num,int ordem)
+void tudo(pagina *raiz, int num, int ordem)
 {
-    pagina *folha = encontra_folha(raiz,num);
-    delete(folha,num,ordem);
+    pagina *folha = encontra_folha(raiz, num);
+    delete (folha, num, ordem);
 }
