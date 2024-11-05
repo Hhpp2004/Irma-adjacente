@@ -477,5 +477,7 @@ está numa folha e que chame as funções anteriores para concluir a remoção.
 void tudo(pagina *raiz, int num, int ordem)
 {
     pagina *folha = encontra_folha(raiz, num);
-    delete (folha, num, ordem);
+    pagina *pai = folha->pai; 
+    pagina *aux = doacao(pai,num,ordem);
+    //delete (folha, num, ordem);
 }
